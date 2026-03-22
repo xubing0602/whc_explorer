@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>World Heritage Cyber Atlas</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Space+Grotesk:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="app-header">
+        <div class="title-block">
+          <div class="kicker">UNESCO • World Heritage • 2025</div>
+          <h1>World Heritage Cyber Atlas</h1>
+          <p class="subtitle">全球世界文化遗产的未来感地图控制台</p>
+        </div>
+        <div class="summary">
+          <div class="summary-item">
+            <div class="summary-label">当前结果</div>
+            <div class="summary-value" id="results-count">0</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">总遗产数</div>
+            <div class="summary-value" id="total-count">0</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">我去过</div>
+            <div class="summary-value" id="visited-count">0</div>
+          </div>
+        </div>
+      </header>
+
+      <div id="main">
+        <aside class="panel" id="filters">
+          <div class="panel-header">
+            <h2>过滤控制</h2>
+            <p>精准筛选遗产，并实时查看匹配数量</p>
+          </div>
+
+          <div class="filter-group">
+            <label for="filter-name">名字搜索</label>
+            <input
+              id="filter-name"
+              type="text"
+              placeholder="输入中文或英文名"
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="filter-group">
+            <label>濒危状态</label>
+            <div class="chip-row" id="filter-danger">
+              <button class="chip active" data-value="all">
+                全部 <span class="chip-count">0</span>
+              </button>
+              <button class="chip" data-value="1">
+                是 <span class="chip-count">0</span>
+              </button>
+              <button class="chip" data-value="0">
+                否 <span class="chip-count">0</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <label>遗产类别</label>
+            <div class="chip-row" id="filter-category">
+              <button class="chip active" data-value="all">
+                全部 <span class="chip-count">0</span>
+              </button>
+              <button class="chip" data-value="Cultural">
+                文化 <span class="chip-count">0</span>
+              </button>
+              <button class="chip" data-value="Natural">
+                自然 <span class="chip-count">0</span>
+              </button>
+              <button class="chip" data-value="Mixed">
+                混合 <span class="chip-count">0</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <label for="filter-state">国家或地区</label>
+            <select id="filter-state"></select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filter-region">区域</label>
+            <select id="filter-region"></select>
+          </div>
+
+          <div class="filter-group">
+            <label>我是否去过</label>
+            <div class="chip-row" id="filter-been">
+              <button class="chip active" data-value="all">
+                全部 <span class="chip-count">0</span>
+              </button>
+              <button class="chip" data-value="visited">
+                去过 <span class="chip-count">0</span>
+              </button>
+              <button class="chip" data-value="not">
+                未去过 <span class="chip-count">0</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="legend">
+            <div class="legend-title">图例</div>
+            <div class="legend-item">
+              <img src="assets/cultural.png" alt="文化" />
+              <span>文化遗产</span>
+            </div>
+            <div class="legend-item">
+              <img src="assets/natural.png" alt="自然" />
+              <span>自然遗产</span>
+            </div>
+            <div class="legend-item">
+              <img src="assets/mixed.png" alt="混合" />
+              <span>混合遗产</span>
+            </div>
+            <div class="legend-item">
+              <span class="visited-dot">✓</span>
+              <span>我去过（图标更亮+标记）</span>
+            </div>
+          </div>
+        </aside>
+
+        <section id="map-shell">
+          <div id="map"></div>
+          <div class="map-overlay">
+            <div class="overlay-title">Cyber Atlas HUD</div>
+            <div class="overlay-sub">点击任意标记查看详情</div>
+          </div>
+        </section>
+
+        <aside class="panel" id="stats">
+          <div class="panel-header">
+            <h2>统计矩阵</h2>
+            <p>按国家/地区统计文化、自然、混合遗产数量</p>
+          </div>
+
+          <div class="stats-controls">
+            <div class="tab-row" id="stats-tabs">
+              <button class="tab active" data-scope="all">全部遗产</button>
+              <button class="tab" data-scope="visited">我去过</button>
+            </div>
+            <div class="sort-row">
+              <label for="stats-sort">排序</label>
+              <select id="stats-sort">
+                <option value="total">总数</option>
+                <option value="cultural">文化</option>
+                <option value="natural">自然</option>
+                <option value="mixed">混合</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="stats-chart" id="stats-chart"></div>
+          <div class="stats-table" id="stats-table"></div>
+        </aside>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script
+      async
+      defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAaFVpZPOA89d58t7aKdjlaM6qTKHynx_c&callback=initMap&v=weekly&language=zh-CN"
+    ></script>
+  </body>
+</html>
