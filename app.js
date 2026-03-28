@@ -192,8 +192,8 @@ function createMarkers() {
           ? {
               text: "✓",
               color: "#00f6ff",
-              fontWeight: "700",
-              fontSize: "12px",
+              fontWeight: "900",
+              fontSize: "20px",
             }
           : null,
         optimized: true,
@@ -231,7 +231,7 @@ function renderInfoWindow(site) {
     <div class="info-window">
       <div class="info-title">
         <div class="zh">${escapeHTML(zhName || enName || "-")}</div>
-        <div class="en">${escapeHTML(enName || "-")}</div>
+        ${zhName ? `<div class="en">${escapeHTML(enName || "-")}</div>` : ""}
       </div>
       <div class="info-desc">${escapeHTML(desc)}</div>
       <div class="info-grid">
