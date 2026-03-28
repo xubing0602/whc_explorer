@@ -54,6 +54,7 @@ let allRegions = [];
 let statsAll = [];
 let statsVisited = [];
 let statsScope = "all";
+const BAR_UNIT_PX = 8;
 
 const filters = {
   name: "",
@@ -551,59 +552,50 @@ function updateStatsView() {
     .slice()
     .sort((a, b) => b[sortKey] - a[sortKey] || a.state.localeCompare(b.state));
 
-  renderStatsTable(sorted);
   renderStatsChart(sorted, sortKey);
-}
-
-function renderStatsTable(data) {
-  const container = document.getElementById("stats-table");
-  container.innerHTML = "";
-
-  const header = document.createElement("div");
-  header.className = "table-row header";
-  header.innerHTML =
-    "<span>国家/地区</span><span>文化</span><span>自然</span><span>混合</span><span>总数</span>";
-  container.appendChild(header);
-
-  data.forEach((row) => {
-    const item = document.createElement("div");
-    item.className = "table-row";
-    item.innerHTML = `
-      <span>${escapeHTML(row.state)}</span>
-      <span>${row.cultural}</span>
-      <span>${row.natural}</span>
-      <span>${row.mixed}</span>
-      <span>${row.total}</span>
-    `;
-    container.appendChild(item);
-  });
-
-  if (data.length === 0) {
-    const empty = document.createElement("div");
-    empty.className = "table-row";
-    empty.innerHTML = "<span>暂无数据</span><span>-</span><span>-</span><span>-</span><span>-</span>";
-    container.appendChild(empty);
-  }
 }
 
 function renderStatsChart(data, key) {
   const container = document.getElementById("stats-chart");
   container.innerHTML = "";
 
-  if (!data.length) return;
+  if (!data.length) {
+    container.textContent = "暂无数据";
+    return;
+  }
 
-  const top = data.slice(0, 12);
-  const max = Math.max(...top.map((item) => item[key]));
-
-  top.forEach((item) => {
+  data.forEach((item) => {
     const row = document.createElement("div");
     row.className = "chart-row";
     const label = document.createElement("div");
-    label.textContent = `${item.state} (${item[key]})`;
+    label.className = "chart-label";
+    const title = document.createElement("div");
+    title.className = "title";
+    title.textContent = `${item.state} (${item.total})`;
+    label.appendChild(title);
 
     const bar = document.createElement("div");
     bar.className = "chart-bar";
-    bar.style.width = max ? `${(item[key] / max) * 100}%` : "0%";
+    bar.style.width = `${item.total * BAR_UNIT_PX}px`;
+
+    const culturalSeg = document.createElement("div");
+    culturalSeg.className = "chart-segment cultural";
+    culturalSeg.style.width = `${item.cultural * BAR_UNIT_PX}px`;
+    culturalSeg.textContent = item.cultural ? item.cultural : "";
+
+    const naturalSeg = document.createElement("div");
+    naturalSeg.className = "chart-segment natural";
+    naturalSeg.style.width = `${item.natural * BAR_UNIT_PX}px`;
+    naturalSeg.textContent = item.natural ? item.natural : "";
+
+    const mixedSeg = document.createElement("div");
+    mixedSeg.className = "chart-segment mixed";
+    mixedSeg.style.width = `${item.mixed * BAR_UNIT_PX}px`;
+    mixedSeg.textContent = item.mixed ? item.mixed : "";
+
+    bar.appendChild(culturalSeg);
+    bar.appendChild(naturalSeg);
+    bar.appendChild(mixedSeg);
 
     row.appendChild(label);
     row.appendChild(bar);
