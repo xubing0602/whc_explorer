@@ -54,7 +54,7 @@ let allRegions = [];
 let statsAll = [];
 let statsVisited = [];
 let statsScope = "all";
-const BAR_UNIT_PX = 8;
+const BAR_UNIT_PX = 16;
 
 const filters = {
   name: "",

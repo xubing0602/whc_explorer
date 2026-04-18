@@ -104,11 +104,26 @@ body {
 #main {
   flex: 1;
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr) 360px;
+  grid-template-columns: 320px minmax(0, 1fr);
+  grid-template-areas:
+    "filters map"
+    "stats stats";
   gap: 16px;
   padding: 18px 20px 24px;
   position: relative;
   z-index: 1;
+}
+
+#filters {
+  grid-area: filters;
+}
+
+#map-shell {
+  grid-area: map;
+}
+
+#stats {
+  grid-area: stats;
 }
 
 .panel {
@@ -428,6 +443,10 @@ select:focus {
 @media (max-width: 1200px) {
   #main {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "filters"
+      "map"
+      "stats";
   }
 
   #map {
