@@ -4,51 +4,18 @@ const ICONS = {
   mixed: "assets/mixed.png",
 };
 
-const MAP_STYLE = [
-  { elementType: "geometry", stylers: [{ color: "#0a1020" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#0a1020" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#6fa3ff" }] },
-  {
-    featureType: "administrative",
-    elementType: "geometry",
-    stylers: [{ color: "#1f2b40" }],
-  },
-  {
-    featureType: "poi",
-    elementType: "geometry",
-    stylers: [{ color: "#101c33" }],
-  },
-  {
-    featureType: "road",
-    elementType: "geometry",
-    stylers: [{ color: "#17243a" }],
-  },
-  {
-    featureType: "road",
-    elementType: "geometry.stroke",
-    stylers: [{ color: "#22334f" }],
-  },
-  {
-    featureType: "transit",
-    elementType: "geometry",
-    stylers: [{ color: "#131e33" }],
-  },
-  {
-    featureType: "water",
-    elementType: "geometry",
-    stylers: [{ color: "#0c1f2e" }],
-  },
-  {
-    featureType: "water",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#4dcfe4" }],
-  },
-];
+const GLOBE_IMAGE_URL =
+  "https://unpkg.com/three-globe@2.31.0/example/img/earth-blue-marble.jpg";
+const BUMP_IMAGE_URL =
+  "https://unpkg.com/three-globe@2.31.0/example/img/earth-topology.png";
+const BACKGROUND_IMAGE_URL =
+  "https://unpkg.com/three-globe@2.31.0/example/img/night-sky.png";
+const COUNTRIES_GEOJSON_URL =
+  "https://unpkg.com/three-globe@2.31.0/example/country-polygons/ne_110m_admin_0_countries.geojson";
 
-let map;
-let infoWindow;
+let globe;
 let sites = [];
-let markers = [];
+let markerData = [];
 let allStates = [];
 let allRegions = [];
 let statsAll = [];
@@ -65,24 +32,87 @@ const filters = {
   been: "all",
 };
 
-window.initMap = async function initMap() {
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: { lat: 20, lng: 0 },
-    zoom: 2,
-    styles: MAP_STYLE,
-    mapTypeControl: false,
-    streetViewControl: false,
-    fullscreenControl: false,
-    gestureHandling: "greedy",
-  });
+window.addEventListener("DOMContentLoaded", init);
 
-  infoWindow = new google.maps.InfoWindow({ maxWidth: 320 });
-
+async function init() {
+  initGlobe();
   await loadData();
   setupFilters();
   setupStatsControls();
+  setupInfoCard();
   updateUI();
-};
+}
+
+function initGlobe() {
+  const mapEl = document.getElementById("map");
+
+  globe = Globe()(mapEl)
+    .globeImageUrl(GLOBE_IMAGE_URL)
+    .bumpImageUrl(BUMP_IMAGE_URL)
+    .backgroundImageUrl(BACKGROUND_IMAGE_URL)
+    .showAtmosphere(true)
+    .atmosphereColor("#4fc3f7")
+    .atmosphereAltitude(0.18)
+    .polygonAltitude(0.006)
+    .polygonCapColor(() => "rgba(80, 180, 255, 0.05)")
+    .polygonSideColor(() => "rgba(0,0,0,0)")
+    .polygonStrokeColor(() => "#6fd4ff")
+    .htmlAltitude(0.01)
+    .htmlLat((d) => d.lat)
+    .htmlLng((d) => d.lng)
+    .htmlElement((d) => buildMarkerEl(d));
+
+  // Load countries for borders
+  fetch(COUNTRIES_GEOJSON_URL)
+    .then((r) => r.json())
+    .then((geo) => globe.polygonsData(geo.features))
+    .catch((err) => console.warn("country polygons failed", err));
+
+  // Controls: smooth auto-rotate off, damping, zoom limits
+  const controls = globe.controls();
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.rotateSpeed = 0.6;
+  controls.zoomSpeed = 0.9;
+  controls.minDistance = 180;
+  controls.maxDistance = 600;
+
+  // Initial camera altitude
+  globe.pointOfView({ lat: 20, lng: 10, altitude: 2.4 }, 0);
+
+  // Resize to container
+  const resize = () => {
+    globe.width(mapEl.clientWidth);
+    globe.height(mapEl.clientHeight);
+  };
+  resize();
+  window.addEventListener("resize", resize);
+}
+
+function buildMarkerEl(d) {
+  const el = document.createElement("div");
+  el.className = "globe-marker" + (d.visited ? " visited" : "");
+  el.style.setProperty("--size", d.visited ? "32px" : "26px");
+  el.innerHTML = `
+    <img src="${d.icon}" alt="" draggable="false" />
+    ${d.visited ? '<span class="tick">✓</span>' : ""}
+  `;
+  el.title = d.title;
+  el.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    openInfoCard(d.site);
+    globe.pointOfView(
+      { lat: d.lat, lng: d.lng, altitude: Math.max(0.9, currentAltitude() * 0.7) },
+      700
+    );
+  });
+  return el;
+}
+
+function currentAltitude() {
+  const pov = globe.pointOfView();
+  return pov && typeof pov.altitude === "number" ? pov.altitude : 2.4;
+}
 
 async function loadData() {
   const response = await fetch("data/whc-sites-2025.csv");
@@ -90,10 +120,7 @@ async function loadData() {
   const rows = parseCSV(text);
 
   sites = rows
-    .map((row, index) => ({
-      ...row,
-      _index: index,
-    }))
+    .map((row, index) => ({ ...row, _index: index }))
     .filter((row) => row.latitude && row.longitude);
 
   allStates = getUniqueStates(sites).sort((a, b) => a.localeCompare(b));
@@ -101,7 +128,24 @@ async function loadData() {
     new Set(sites.map((site) => site.region_en).filter(Boolean))
   ).sort((a, b) => a.localeCompare(b));
 
-  createMarkers();
+  markerData = sites
+    .map((site) => {
+      const lat = parseFloat(site.latitude);
+      const lng = parseFloat(site.longitude);
+      if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
+      const categoryKey = normalizeCategory(site.category);
+      const visited = isVisited(site);
+      return {
+        site,
+        lat,
+        lng,
+        visited,
+        icon: ICONS[categoryKey] || ICONS.cultural,
+        title: site.name_en || site.name_zh || "World Heritage",
+      };
+    })
+    .filter(Boolean);
+
   buildStats();
   updateSummaryCounts();
 }
@@ -164,61 +208,19 @@ function parseCSV(text) {
     });
 }
 
-function createMarkers() {
-  const bounds = new google.maps.LatLngBounds();
-
-  markers = sites
-    .map((site) => {
-      const lat = parseFloat(site.latitude);
-      const lng = parseFloat(site.longitude);
-      if (Number.isNaN(lat) || Number.isNaN(lng)) {
-        return null;
-      }
-
-      const visited = isVisited(site);
-      const categoryKey = normalizeCategory(site.category);
-      const iconUrl = ICONS[categoryKey] || ICONS.cultural;
-      const iconSize = visited ? 36 : 30;
-
-      const marker = new google.maps.Marker({
-        position: { lat, lng },
-        map,
-        icon: {
-          url: iconUrl,
-          scaledSize: new google.maps.Size(iconSize, iconSize),
-          anchor: new google.maps.Point(iconSize / 2, iconSize / 2),
-          labelOrigin: new google.maps.Point(iconSize / 2, iconSize / 2),
-        },
-        label: visited
-          ? {
-              text: "✓",
-              color: "#00f6ff",
-              fontWeight: "900",
-              fontSize: "20px",
-            }
-          : null,
-        optimized: true,
-        zIndex: visited ? 999 : 1,
-        title: site.name_en || site.name_zh || "World Heritage",
-      });
-
-      marker.addListener("click", () => {
-        infoWindow.setContent(renderInfoWindow(site));
-        infoWindow.open(map, marker);
-      });
-
-      bounds.extend({ lat, lng });
-
-      return { marker, site };
-    })
-    .filter(Boolean);
-
-  if (!bounds.isEmpty()) {
-    map.fitBounds(bounds);
-  }
+function setupInfoCard() {
+  document.getElementById("info-close").addEventListener("click", () => {
+    document.getElementById("info-card").hidden = true;
+  });
 }
 
-function renderInfoWindow(site) {
+function openInfoCard(site) {
+  const card = document.getElementById("info-card");
+  document.getElementById("info-body").innerHTML = renderInfoContent(site);
+  card.hidden = false;
+}
+
+function renderInfoContent(site) {
   const zhName = site.name_zh && site.name_zh.trim();
   const enName = site.name_en && site.name_en.trim();
   const descRaw = site.short_description_zh || site.short_description_en || "";
@@ -272,9 +274,7 @@ function formatNumber(value) {
 }
 
 function normalizeCategory(category) {
-  return String(category || "")
-    .trim()
-    .toLowerCase();
+  return String(category || "").trim().toLowerCase();
 }
 
 function isVisited(site) {
@@ -365,9 +365,8 @@ function updateUI() {
 
 function updateMarkerVisibility(filteredSites) {
   const visibleSet = new Set(filteredSites.map((site) => site._index));
-  markers.forEach(({ marker, site }) => {
-    marker.setVisible(visibleSet.has(site._index));
-  });
+  const visible = markerData.filter((d) => visibleSet.has(d.site._index));
+  globe.htmlElementsData(visible);
 }
 
 function updateSummaryCounts(currentCount) {
