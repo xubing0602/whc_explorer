@@ -134,7 +134,11 @@
           <div id="map"></div>
           <div class="map-overlay">
             <div class="overlay-title">Cyber Atlas HUD</div>
-            <div class="overlay-sub">点击任意标记查看详情</div>
+            <div class="overlay-sub">点击任意标记查看详情 · 拖拽旋转 / 滚轮缩放</div>
+          </div>
+          <div id="info-card" class="info-card" hidden>
+            <button class="info-close" id="info-close" aria-label="关闭">×</button>
+            <div id="info-body"></div>
           </div>
         </section>
 
@@ -165,11 +169,8 @@
       </div>
     </div>
 
+    <script src="https://unpkg.com/three@0.149.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/globe.gl@2.32.0/dist/globe.gl.min.js"></script>
     <script src="app.js"></script>
-    <script
-      async
-      defer
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAaFVpZPOA89d58t7aKdjlaM6qTKHynx_c&callback=initMap&v=weekly&language=zh-CN"
-    ></script>
   </body>
 </html>
