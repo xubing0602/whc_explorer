@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-04-26
+
+### Added
+- Responsive design for mobile and tablet devices.
+  - **Tablet (≤ 768px)**: `#main` padding tightened to `12px 14px 18px`; map `min-height` reduced to `380px`; stats chart max-height reduced to `520px`.
+  - **Mobile (≤ 600px)**: header padding reduced to `14px 16px`; h1 font size reduced to `18px`; summary stat cards use `repeat(3, 1fr)` (no `minmax` floor) so all three fit on narrow screens without overflow; map height set to `50vh` / `min-height: 280px`; `--chart-label-width` overridden to `100px` so bar segments have more room; panel padding and chip padding tightened.
+
+- Added Favicon
 ## 2026-04-18
 
 ### Added

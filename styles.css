@@ -170,6 +170,8 @@ select {
   border-radius: 12px;
   font-family: inherit;
   font-size: 13px;
+  width: 100%;
+  min-width: 0;
 }
 
 input:focus,
@@ -463,5 +465,93 @@ select:focus {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+  }
+}
+
+/* ── Tablet (601px – 768px) ── */
+@media (max-width: 768px) {
+  #main {
+    padding: 12px 14px 18px;
+    gap: 12px;
+  }
+
+  #map {
+    min-height: 380px;
+  }
+
+  .stats-chart {
+    max-height: 520px;
+  }
+}
+
+/* ── Mobile (≤ 600px) ── */
+@media (max-width: 600px) {
+  .app-header {
+    padding: 14px 16px;
+    gap: 10px;
+  }
+
+  .title-block h1 {
+    font-size: 18px;
+    margin: 6px 0 4px;
+  }
+
+  .kicker {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+  }
+
+  .subtitle {
+    font-size: 12px;
+  }
+
+  .summary {
+    width: 100%;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .summary-item {
+    padding: 10px 10px;
+  }
+
+  .summary-label {
+    font-size: 11px;
+  }
+
+  .summary-value {
+    font-size: 16px;
+  }
+
+  #main {
+    padding: 10px 12px 16px;
+    gap: 10px;
+  }
+
+  .panel {
+    padding: 14px 14px 16px;
+    gap: 10px;
+  }
+
+  .panel-header h2 {
+    font-size: 15px;
+  }
+
+  #map {
+    min-height: 280px;
+    height: 50vh;
+  }
+
+  :root {
+    --chart-label-width: 100px;
+  }
+
+  .stats-chart {
+    max-height: 400px;
+  }
+
+  .chip {
+    padding: 5px 10px;
+    font-size: 11px;
   }
 }

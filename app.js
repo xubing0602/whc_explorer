@@ -564,6 +564,8 @@ function renderStatsChart(data, key) {
     return;
   }
 
+  const maxTotal = data[0]?.total ?? 1;
+
   data.forEach((item) => {
     const row = document.createElement("div");
     row.className = "chart-row";
@@ -576,21 +578,21 @@ function renderStatsChart(data, key) {
 
     const bar = document.createElement("div");
     bar.className = "chart-bar";
-    bar.style.width = `${item.total * BAR_UNIT_PX}px`;
+    bar.style.width = `${(item.total / maxTotal) * 100}%`;
 
     const culturalSeg = document.createElement("div");
     culturalSeg.className = "chart-segment cultural";
-    culturalSeg.style.width = `${item.cultural * BAR_UNIT_PX}px`;
+    culturalSeg.style.flex = String(item.cultural);
     culturalSeg.textContent = item.cultural ? item.cultural : "";
 
     const naturalSeg = document.createElement("div");
     naturalSeg.className = "chart-segment natural";
-    naturalSeg.style.width = `${item.natural * BAR_UNIT_PX}px`;
+    naturalSeg.style.flex = String(item.natural);
     naturalSeg.textContent = item.natural ? item.natural : "";
 
     const mixedSeg = document.createElement("div");
     mixedSeg.className = "chart-segment mixed";
-    mixedSeg.style.width = `${item.mixed * BAR_UNIT_PX}px`;
+    mixedSeg.style.flex = String(item.mixed);
     mixedSeg.textContent = item.mixed ? item.mixed : "";
 
     bar.appendChild(culturalSeg);
